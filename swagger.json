@@ -1,0 +1,103 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/slip-box/cards": {
+      "get": {
+        "operationId": "SlipBoxController_getAllCards",
+        "summary": "获取所有卡片",
+        "parameters": [
+          {
+            "name": "del",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
+      }
+    },
+    "/slip-box/cards/{id}": {
+      "get": {
+        "operationId": "SlipBoxController_getCard",
+        "summary": "获取单个卡片",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
+      }
+    },
+    "/slip-box/tags": {
+      "get": {
+        "operationId": "SlipBoxController_getAllTags",
+        "summary": "获取所有标签",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
+      }
+    },
+    "/slip-box/tags/{id}": {
+      "get": {
+        "operationId": "SlipBoxController_getTag",
+        "summary": "获取单个标签",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "mind-land",
+    "description": "mind-land api文档",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {}
+  }
+}
