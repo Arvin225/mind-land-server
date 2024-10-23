@@ -23,12 +23,65 @@
         "tags": [
           "SlipBox"
         ]
+      },
+      "post": {
+        "operationId": "SlipBoxController_createCard",
+        "summary": "新建卡片",
+        "parameters": [
+          {
+            "name": "createCardDto",
+            "required": true,
+            "in": "path",
+            "description": "text文本 + html文本",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCardDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
       }
     },
     "/slip-box/cards/{id}": {
       "get": {
         "operationId": "SlipBoxController_getCard",
         "summary": "获取单个卡片",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
+      },
+      "delete": {
+        "operationId": "SlipBoxController_deleteCard",
+        "summary": "删除卡片",
         "parameters": [
           {
             "name": "id",
@@ -98,6 +151,24 @@
   "tags": [],
   "servers": [],
   "components": {
-    "schemas": {}
+    "schemas": {
+      "CreateCardDto": {
+        "type": "object",
+        "properties": {
+          "contentWithText": {
+            "type": "string",
+            "description": "文本内容"
+          },
+          "contentWithHtml": {
+            "type": "string",
+            "description": "html内容"
+          }
+        },
+        "required": [
+          "contentWithText",
+          "contentWithHtml"
+        ]
+      }
+    }
   }
 }

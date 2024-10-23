@@ -3,20 +3,20 @@ import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 @Entity()
 export class Tag {
     @PrimaryGeneratedColumn()
-    id: number;
+    id?: number;
 
     @Column({ unique: true })
     tagName: string;
 
     @Column()
-    parent: string;
+    parent: number;
 
     @Column("simple-array")
-    children: string[];
+    children: number[];
 
     @Column()
     cardCount: number;
 
     @Column("simple-array")
-    cards: string[];
+    cards: number[];
 }

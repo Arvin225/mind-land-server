@@ -20,7 +20,7 @@ export class Card {
 
     // @ManyToMany(type => Tag, tag => tag.cards)
     @Column("simple-array")
-    tags: string[];
+    tags: number[];
 
     @Column()
     del: boolean;
