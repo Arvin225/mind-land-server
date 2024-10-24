@@ -3,21 +3,30 @@
   "paths": {
     "/slip-box/cards": {
       "get": {
-        "operationId": "SlipBoxController_getAllCards",
-        "summary": "获取所有卡片",
+        "operationId": "SlipBoxController_getCards",
+        "summary": "获取所有/特定标签下的卡片",
         "parameters": [
           {
-            "name": "del",
+            "name": "",
             "required": true,
-            "in": "path",
-            "schema": {
-              "type": "boolean"
-            }
+            "in": "query",
+            "description": "传del获取所有卡片，传tagId获取此标签下的所有卡片",
+            "schema": {}
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "default": {
+            "description": "卡片们获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Card"
+                  }
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -27,17 +36,10 @@
       "post": {
         "operationId": "SlipBoxController_createCard",
         "summary": "新建卡片",
-        "parameters": [
-          {
-            "name": "createCardDto",
-            "required": true,
-            "in": "path",
-            "description": "text文本 + html文本",
-            "schema": {}
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "required": true,
+          "description": "text文本 + html文本",
           "content": {
             "application/json": {
               "schema": {
@@ -47,8 +49,46 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "default": {
+            "description": "卡片新建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCardResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
+      },
+      "delete": {
+        "operationId": "SlipBoxController_deleteCard",
+        "summary": "删除卡片",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "卡片id及其标签们的id",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteCardDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "卡片删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteCardResponse"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -71,30 +111,15 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "SlipBox"
-        ]
-      },
-      "delete": {
-        "operationId": "SlipBoxController_deleteCard",
-        "summary": "删除卡片",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
+          "default": {
+            "description": "卡片获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Card"
+                }
+              }
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
           }
         },
         "tags": [
@@ -108,8 +133,18 @@
         "summary": "获取所有标签",
         "parameters": [],
         "responses": {
-          "200": {
-            "description": ""
+          "default": {
+            "description": "标签们获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -132,8 +167,15 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "default": {
+            "description": "标签获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -152,6 +194,115 @@
   "servers": [],
   "components": {
     "schemas": {
+      "Statistics": {
+        "type": "object",
+        "properties": {
+          "builtTime": {
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updateTime": {
+            "type": "string",
+            "description": "更新时间"
+          },
+          "words": {
+            "type": "number",
+            "description": "字数"
+          }
+        },
+        "required": [
+          "builtTime",
+          "updateTime",
+          "words"
+        ]
+      },
+      "Card": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "卡片id"
+          },
+          "content": {
+            "type": "string",
+            "description": "内容"
+          },
+          "builtOrDelTime": {
+            "type": "string",
+            "description": "创建或删除日期"
+          },
+          "statistics": {
+            "description": "统计信息",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Statistics"
+              }
+            ]
+          },
+          "tags": {
+            "description": "包含的标签们的id",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "del": {
+            "type": "boolean",
+            "description": "删除标记"
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "builtOrDelTime",
+          "statistics",
+          "tags",
+          "del"
+        ]
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "标签id"
+          },
+          "tagName": {
+            "type": "string",
+            "description": "标签名"
+          },
+          "parent": {
+            "type": "number",
+            "description": "父标签的id"
+          },
+          "children": {
+            "description": "子标签们的id",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "cardCount": {
+            "type": "number",
+            "description": "卡片数量"
+          },
+          "cards": {
+            "description": "卡片们的id",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "tagName",
+          "parent",
+          "children",
+          "cardCount",
+          "cards"
+        ]
+      },
       "CreateCardDto": {
         "type": "object",
         "properties": {
@@ -167,6 +318,69 @@
         "required": [
           "contentWithText",
           "contentWithHtml"
+        ]
+      },
+      "CreateCardResponse": {
+        "type": "object",
+        "properties": {
+          "card": {
+            "description": "新建的卡片",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Card"
+              }
+            ]
+          },
+          "tags": {
+            "description": "包含的标签们",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          }
+        },
+        "required": [
+          "card",
+          "tags"
+        ]
+      },
+      "DeleteCardDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "卡片id"
+          },
+          "tagIds": {
+            "description": "属于该卡片的标签们的id",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "提交永久删除"
+          }
+        },
+        "required": [
+          "id",
+          "tagIds"
+        ]
+      },
+      "DeleteCardResponse": {
+        "type": "object",
+        "properties": {
+          "deletedTagIds": {
+            "description": "被删除的标签们的id",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "deletedTagIds"
         ]
       }
     }
