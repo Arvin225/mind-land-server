@@ -8,7 +8,7 @@ export class DeleteCardDto {
     readonly id: number
 
     @ApiProperty({ description: '属于该卡片的标签们的id', type: Number, isArray: true })
-    @IsNumber(null, { each: true })
+    @IsNumber({}, { each: true })
     @IsNotEmpty()
     readonly tagIds: number[]
 

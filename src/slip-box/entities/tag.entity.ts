@@ -16,7 +16,7 @@ export class Tag {
     parent: number;
 
     @ApiProperty({ description: '子标签们的id', type: Number, isArray: true })
-    @Column("simple-array")
+    @Column("json")
     children: number[];
 
     @ApiProperty({ description: '卡片数量', type: Number })
@@ -24,6 +24,6 @@ export class Tag {
     cardCount: number;
 
     @ApiProperty({ description: '卡片们的id', type: Number, isArray: true })
-    @Column("simple-array")
+    @Column("json")
     cards: number[];
 }

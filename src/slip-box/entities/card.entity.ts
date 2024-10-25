@@ -30,7 +30,7 @@ export class Card {
 
     @ApiProperty({ description: '包含的标签们的id', type: Number, isArray: true })
     // @ManyToMany(type => Tag, tag => tag.cards)
-    @Column("simple-array")
+    @Column("json")
     tags: number[];
 
     @ApiProperty({ description: '删除标记', type: Boolean })

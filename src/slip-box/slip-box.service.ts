@@ -146,13 +146,22 @@ export class SlipBoxService {
 
                 let cid: number
                 // try {
+                // 标记是否继续收集标签
+                let isContinueCollectTag = false
+
                 for (let i = splitNames.length; i > 0; i--) {
                     // 取前i个分割的name以“/”构成祖先标签（或当前标签）的tagName
                     const tagName = splitNames.slice(0, i).join('/')
 
                     // 1.1 判断当前标签及其祖先标签是否存在
-                    // 数据库查询该标签 //todo 或许数据库拉取所有tag（或store里保存的所有tag）再比对会更规范些？
+                    // 数据库查询该标签 
                     const tag: Tag = await entityManager.findOneBy(Tag, { tagName })
+
+                    // 继续收集标签标记为真则不向下执行更新操作而继续向前遍历查询收集祖先标签
+                    if (isContinueCollectTag) {
+                        allTags.push(tag)
+                        continue
+                    }
 
                     // 1.1.1 存在则将cid添加到children（如果为叶子标签则cid为空）
                     if (tag) {
@@ -162,8 +171,13 @@ export class SlipBoxService {
                         if (!cid) {
                             cardTags.push(tag.id)
                             leafTags.push(tag)
-                            // 不再向前遍历
-                            break
+
+                            // 标记继续收集标签
+                            isContinueCollectTag = true
+
+                            // 不再向下执行
+                            continue
+
                         }
 
                         // 不是叶子标签时添加子标签的id到children属性中
@@ -174,7 +188,10 @@ export class SlipBoxService {
                         await entityManager.update(Tag, tag.id, tag)
 
                         // 不再向前遍历
-                        break
+                        // break
+
+                        // 标记继续收集标签
+                        isContinueCollectTag = true
 
                         // 1.1.2 不存在则创建（将cardCount置为0，将子标签的id添加到children，将当前标签的id设置到子标签的parent中）
                     } else {
@@ -295,15 +312,20 @@ export class SlipBoxService {
         const entityManager = queryRunner.manager
         try {
 
-            // 将del置为true、tags置为空
-            await entityManager.update(Card, id, { del: true, tags: [] })
+            // 1.将del置为true
+            await entityManager.update(Card, id, { del: true })
 
-            let deletedTagIds: number[] = []
+            const deletedTagIds: number[] = []
+
+            // 2.修改卡片计数
+            // 定义记录计数修改过的标签的id数组，用于防止重复修改
+            const decreasedTagIds: number[] = []
             for (let i = 0; i < tagIds.length; i++) {
                 const tid = tagIds[i];
                 // 向前遍历卡片的标签的所有父级，将计数-1
-                deletedTagIds = await this.decreaseCardCount(tid, entityManager)
-                // 若卡片标签没被删除则将卡片从其标签中删去
+                await this.decreaseCardCount(tid, decreasedTagIds, deletedTagIds, entityManager)
+
+                // 3.若卡片标签没被删除则将卡片从其标签中删去
                 if (!deletedTagIds.includes(tid)) {
                     const tag = await entityManager.findOneBy(Tag, { id: tid })
                     tag && await entityManager.update(Tag, tag.id, { cards: _.without(tag.cards, id) })
@@ -323,13 +345,13 @@ export class SlipBoxService {
     }
 
     /* 卡片计数减少的函数 */
-    async decreaseCardCount(id: number, entityManager: EntityManager, count = 1, stopTag?: { id: number, children: number[] }) {
+    async decreaseCardCount(id: number, decreasedTagIds: number[], deletedTagIds: number[], entityManager: EntityManager, count = 1, stopTag?: { id: number, children: number[] }) {
+
+        let cid: number | null
+        // const deletedTagIds: number[] = []
 
         await decrease(id, count, stopTag)
 
-        let cid: number | null
-        const deletedTagIds: number[] = []
-        const decreasedTagIds: number[] = []
         // 卡片计数-1的函数 
         async function decrease(id: number, count: number, stopTag?: { id: number, children: number[] }) {
             // 递归终止条件：id为空或减过
@@ -371,7 +393,7 @@ export class SlipBoxService {
             await decrease(pid, count, stopTag)
         }
 
-        return deletedTagIds
+        // return deletedTagIds
     }
 
 }
