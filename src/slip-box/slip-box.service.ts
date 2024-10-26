@@ -7,6 +7,7 @@ import { CreateCardDto } from './dto/create-card.dto';
 import { compile } from 'html-to-text';
 import * as _ from 'lodash';
 import getCurrentDateTime from 'src/utils/get-current-date-time.util';
+import { DeleteTagDto } from './dto/delete-tag.dto';
 
 @Injectable()
 export class SlipBoxService {
@@ -128,7 +129,7 @@ export class SlipBoxService {
             await queryRunner.release() // 释放连接
         }
 
-        /* 保存标签到数据库的函数 */
+        /* 函数：保存标签到数据库 */
         async function saveTag(tagNames: string[], entityManager: EntityManager): Promise<{ cardTags: number[], leafTags: Tag[] }> {
             // 定义card的标签数组，标签存库结束后该数组也收集完毕
             const cardTags: number[] = []
@@ -248,7 +249,7 @@ export class SlipBoxService {
             return { cardTags, leafTags }
         }
 
-        /* 保存 card 的函数 */
+        /* 函数：保存 card  */
         async function saveCard(contentWithHtml: string, contentWithText: string, cardTags: number[], entityManager: EntityManager): Promise<Card> {
             const currentDateTime = getCurrentDateTime(); // 格式化当前时间
             return await entityManager.save(Card,
@@ -290,7 +291,7 @@ export class SlipBoxService {
             } */
         }
 
-        /* 将新增的 card 的 id 添加到叶子标签中的函数 */
+        /* 函数：将新增的 card 的 id 添加到叶子标签中 */
         async function addCardIdIntoTag(leafTags: Tag[], cardId: number, entityManager: EntityManager) {
             leafTags.forEach(async tag => {
                 await entityManager.update(Tag, tag.id, { cards: [...tag.cards, cardId] })
@@ -312,8 +313,8 @@ export class SlipBoxService {
         const entityManager = queryRunner.manager
         try {
 
-            // 1.将del置为true
-            await entityManager.update(Card, id, { del: true })
+            // 1.将del置为true、设置删除时间
+            await entityManager.update(Card, id, { builtOrDelTime: `删除于 ${getCurrentDateTime()}`, del: true })
 
             const deletedTagIds: number[] = []
 
@@ -323,7 +324,7 @@ export class SlipBoxService {
             for (let i = 0; i < tagIds.length; i++) {
                 const tid = tagIds[i];
                 // 向前遍历卡片的标签的所有父级，将计数-1
-                await this.decreaseCardCount(tid, decreasedTagIds, deletedTagIds, entityManager)
+                await this.decreaseCardCount(entityManager, { id: tid }, decreasedTagIds, deletedTagIds,)
 
                 // 3.若卡片标签没被删除则将卡片从其标签中删去
                 if (!deletedTagIds.includes(tid)) {
@@ -344,8 +345,8 @@ export class SlipBoxService {
         }
     }
 
-    /* 卡片计数减少的函数 */
-    async decreaseCardCount(id: number, decreasedTagIds: number[], deletedTagIds: number[], entityManager: EntityManager, count = 1, stopTag?: { id: number, children: number[] }) {
+    /* 函数：卡片计数减少 */
+    async decreaseCardCount(entityManager: EntityManager, { id, count = 1, stopTag }: { id: number, count?: number, stopTag?: Tag }, decreasedTagIds?: number[], deletedTagIds?: number[]) {
 
         let cid: number | null
         // const deletedTagIds: number[] = []
@@ -353,9 +354,9 @@ export class SlipBoxService {
         await decrease(id, count, stopTag)
 
         // 卡片计数-1的函数 
-        async function decrease(id: number, count: number, stopTag?: { id: number, children: number[] }) {
+        async function decrease(id: number, count: number, stopTag?: Tag) {
             // 递归终止条件：id为空或减过
-            if (!id || decreasedTagIds.includes(id)) return
+            if (!id || (decreasedTagIds && decreasedTagIds.includes(id))) return
 
             const tag = await entityManager.findOneBy(Tag, { id })
             const pid = tag.parent
@@ -367,7 +368,7 @@ export class SlipBoxService {
                 // 保存id
                 cid = id
                 // 收集删除的tag的id
-                deletedTagIds.push(id)
+                deletedTagIds && deletedTagIds.push(id)
 
                 // 如果父标签是停止标签则将当前标签从其children属性中删除并结束递归
                 if (stopTag && (pid === stopTag.id)) {
@@ -386,7 +387,7 @@ export class SlipBoxService {
                 // 将计数-1
                 await entityManager.update(Tag, tag.id, { cardCount: tag.cardCount - count, children })
                 // 收集计数减少过的tag
-                decreasedTagIds.push(tag.id)
+                decreasedTagIds && decreasedTagIds.push(tag.id)
             }
 
             // 递归
@@ -394,6 +395,237 @@ export class SlipBoxService {
         }
 
         // return deletedTagIds
+    }
+
+    /* 仅移除标签 */
+    async deleteTag({ id, tagName }: DeleteTagDto) {
+
+        const queryRunner = this.dataSource.createQueryRunner()
+        await queryRunner.connect()
+        await queryRunner.startTransaction()
+        const entityManager = queryRunner.manager
+        try {
+            // 递归children
+            await this.recursiveTagChildren(id, async (tag) => {
+                const cards = tag.cards
+
+                // 1.从当前标签的所有卡片中移除当前标签，内容上也移除 //todo 用正则处理文本
+                for (let i = 0; i < cards.length; i++) {
+                    const card = await entityManager.findOneBy(Card, { id: cards[i] })
+                    const regex = new RegExp(`\\b#${tagName}\\b`, 'g')
+                    await entityManager.update(Card, card.id, { content: card.content.replaceAll(regex, ''), tags: _.without(card.tags, tag.id) })
+                }
+
+                // 删除当前标签
+                await entityManager.delete(Tag, tag.id)
+
+                // 如果当前标签是递归回溯的根标签则：
+                if (tag.id === id) {
+                    const pid = tag.parent
+                    if (pid) {
+                        // 得到父标签
+                        const parent = await entityManager.findOneBy(Tag, { id: pid })
+                        // 将当前标签从父标签children属性中删除
+                        await entityManager.update(Tag, pid, { children: _.without(parent.children, tag.id) })
+
+                        // 递归修正父级标签的卡片计数
+                        let cid: number | null
+                        await this.recursiveTagParent(pid, async (tag) => {
+                            // 获取从父标签开始的当前的所有卡片
+                            const cardsFromParent = await this.getCardsByTagId(tag.id)
+                            // 统计数量
+                            const nowCardCount = cardsFromParent.length
+                            if (nowCardCount) {
+                                let children
+                                if (cid) {
+                                    children = _.without(tag.children, cid)
+                                    cid = null
+                                }
+                                // 修正卡片计数
+                                await entityManager.update(Tag, tag.id, { cardCount: nowCardCount, children })
+                            } else {
+                                await entityManager.delete(Tag, tag.id)
+                                cid = tag.id
+                            }
+                        })
+
+
+                        /* // 得到减少的数量
+                        const removedCardCount = parent.cardCount - nowCardCount
+    
+                        let cid
+                        //从父标签开始向前遍历修改卡片计数
+                        await recursiveTagParent(pid, async (tag) => {
+                            // 卡片计数减为0则删除当前标签
+                            if (tag.cardCount === removedCardCount) {
+                                await deleteTagAPI(tag.id)
+                                cid = tag.id // 保存id
+                            } else {
+                                let children
+                                if (cid) {
+                                    children = _.without(tag.children, cid)
+                                    cid = '' // 置为空
+                                }
+                                await patchTagAPI({ id: tag.id, children, cardCount: (tag.cardCount - removedCardCount) })
+                            }
+                        }) */
+
+                    }
+                }
+
+            })
+
+            await queryRunner.commitTransaction()
+
+        } catch (error) {
+            await queryRunner.rollbackTransaction()
+            throw new HttpException(error, 500)
+        } finally {
+            await queryRunner.release()
+        }
+    }
+
+    /* 删除标签及卡片 */
+    async deleteTagOverCards({ id, tagName }: DeleteTagDto) {
+        // 定义卡片剩余标签数组
+        const cardsLeftoverTags: { id: number, tags: number[] }[] = []
+        // 定义可直接减少的卡片数量
+        let directlyDecreasedCardCount = 0
+
+        const queryRunner = this.dataSource.createQueryRunner()
+        await queryRunner.connect()
+        await queryRunner.startTransaction()
+        const entityManager = queryRunner.manager
+        try {
+            // 递归children
+            await this.recursiveTagChildren(id, async (tag) => {
+                const cards = tag.cards
+
+                // 1.将当前标签下的所有卡片删除，设置删除时间
+                for (let i = 0; i < cards.length; i++) {
+                    const card = await entityManager.findOneBy(Card, { id: cards[i] })
+
+                    // 查询当前卡片的剩余标签
+                    const index = cardsLeftoverTags.findIndex(clt => clt.id === card.id)
+                    // 查询到则将当前标签从其当前卡片剩于标签中删除后更新到卡片剩余标签数组中
+                    if (index > 0) {
+                        const leftoverTags = _.without(cardsLeftoverTags[index].tags, tag.id)
+                        _.pullAt(cardsLeftoverTags, index)
+                        // 剩余标签为空则不再记录
+                        leftoverTags.length ? cardsLeftoverTags.push({ id: card.id, tags: leftoverTags }) : directlyDecreasedCardCount++
+                    } else {
+                        // 没查询到则追加到卡片剩余标签数组中
+                        cardsLeftoverTags.push({ id: card.id, tags: _.without(card.tags, tag.id) })
+                    }
+
+                    // 删除当前卡片
+                    !card.del && await entityManager.update(Card, card.id, { del: true, builtOrDelTime: `删除于 ${getCurrentDateTime()}` })
+                }
+                // 删除当前标签
+                await entityManager.delete(Tag, tag.id)
+
+                // 如果当前标签是递归回溯的根标签则将其从其父标签中删除
+                if (tag.id === id) {
+                    const pid = tag.parent
+                    if (pid) {
+                        // 得到父标签
+                        const parent = await entityManager.findOneBy(Tag, { id: pid })
+                        // 将当前标签从父标签children属性中删除
+                        await entityManager.update(Tag, pid, { children: _.without(parent.children, tag.id) })
+
+                        for (let i = 0; i < cardsLeftoverTags.length; i++) {
+                            const cardLeftoverTags = cardsLeftoverTags[i];
+                            const cardId = cardLeftoverTags.id
+                            const tags = cardLeftoverTags.tags
+                            // let noParentAndSiblingTag = true
+                            for (let i = 0; i < tags.length; i++) {
+                                const tagId = tags[i];
+                                const tag = await entityManager.findOneBy(Tag, { id: tagId })
+
+                                // 将当前卡片从此标签的cards中移除
+                                await entityManager.update(Tag, tagId, { cards: _.without(tag.cards, cardId) })
+
+                                const name = tag.tagName
+                                const parentName = parent.tagName
+                                // 如果是兄弟或侄子标签，将其卡片计数-1，减到0则将其删除并在父标签的children中删除该标签
+                                if (name.startsWith(parentName)) {
+                                    await this.decreaseCardCount(entityManager, { id: tagId, count: 1, stopTag: parent }) //! 如果兄弟标签和其子级标签同时持有卡片时又会出现同样的被删找不到的问题
+
+                                    // 如果是父级标签，则不做计数操作
+                                } else if (!tagName.startsWith(name)) {
+                                    // 卡片计数-1 
+                                    await this.decreaseCardCount(entityManager, { id: tagId, count: 1, stopTag: parent }) //! 非父级或兄弟标签同样存在找不到的问题
+                                }
+
+
+                                /* let cid
+                                //从父标签开始向前遍历修改卡片计数
+                                await recursiveTagParent(tagId, (id) => decreasedTagIds.includes(id), async (tag) => {
+                                    // 卡片计数减为0则删除当前标签
+                                    if (tag.cardCount === 1) {
+                                        await deleteTagAPI(tag.id)
+                                        cid = tag.id // 保存id
+                                        } else {
+                                            let children
+                                        if (cid) {
+                                            children = _.without(tag.children, cid)
+                                            cid = '' // 置为空
+                                            }
+                                            await patchTagAPI({ id: tag.id, children, cardCount: (tag.cardCount - 1) })
+                                            decreasedTagIds.push(tag.id)
+                                            }
+                                            }) */
+                            }
+                            directlyDecreasedCardCount++
+                            // noParentAndSiblingTag && directlyDecreasedCardCount++
+                        }
+
+                        // 从父标签开始向前遍历修正卡片计数 
+                        await this.decreaseCardCount(entityManager, { id: pid, count: directlyDecreasedCardCount })
+                    }
+                }
+
+            })
+        } catch (error) {
+            await queryRunner.rollbackTransaction()
+            throw new HttpException(error, 500)
+        } finally {
+            await queryRunner.release()
+        }
+    }
+
+    /* 函数：递归标签的children */
+    async recursiveTagChildren(tagId: number, task: (tag: Tag) => void) {
+        // 递归终止条件
+        if (!tagId) return
+
+        const tag = await this.tagRepository.findOneBy({ id: tagId })
+        const children = tag.children
+
+        for (let i = 0; i < children.length; i++) {
+            const cid = children[i];
+            // 递归
+            await this.recursiveTagChildren(cid, task)
+        }
+
+        // 业务
+        await task(tag)
+    }
+
+    /* 函数：递归标签的parent */
+    async recursiveTagParent(tagId: number, task: (tag: Tag) => void) {
+        // 递归终止条件
+        if (!tagId) return
+
+        const tag = await this.tagRepository.findOneBy({ id: tagId })
+        const pid = tag.parent
+
+        // 业务
+        await task(tag)
+
+        // 递归
+        await this.recursiveTagParent(pid, task)
+
     }
 
 }

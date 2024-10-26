@@ -10,7 +10,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus(); // 获取异常状态码
 
     // 设置错误信息
-    const message = exception.message
+    const msg = exception.message
       ? exception.message
       : `${status >= 500 ? 'Service Error' : 'Client Error'}`;
 
@@ -19,11 +19,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       .status(status)
       .json({
         code: -1,
-        msg: 'failed',
-        error: message,
-        status: status,
-        // timestamp: new Date().toISOString(),
-        // path: request.url,
+        message: 'failed',
+        result: {
+          status: status,
+          error: msg,
+          timestamp: new Date().toISOString(),
+          path: request.url,
+        }
+
       });
   }
 }

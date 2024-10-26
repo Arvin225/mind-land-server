@@ -7,6 +7,7 @@ import { CreateCardDto } from './dto/create-card.dto';
 import { DeleteCardDto } from './dto/delete-card.dto';
 import { DeleteCardResponse } from './responses/delete-card.response';
 import { CreateCardResponse } from './responses/create-card.response';
+import { DeleteTagDto } from './dto/delete-tag.dto';
 
 @ApiTags('SlipBox')
 @Controller('slip-box')
@@ -67,6 +68,20 @@ export class SlipBoxController {
             return this.slipBoxService.deleteCard(deleteCardDto)
         } else {
             return this.slipBoxService.removeCard(deleteCardDto)
+        }
+    }
+
+    @ApiOperation({ summary: '删除标签' })
+    @ApiBody({ description: '卡片id及其更新内容', type: DeleteTagDto })
+    @ApiResponse({ description: '标签删除成功' })
+    @Delete('/tags')
+    public deleteTag(@Body() deleteTagDto: DeleteTagDto): Promise<void> {
+        if (deleteTagDto.overCards) {
+            // 删除标签及卡片
+            return this.slipBoxService.deleteTagOverCards(deleteTagDto)
+        } else {
+            // 仅移除标签
+            return this.slipBoxService.deleteTag(deleteTagDto)
         }
     }
 }

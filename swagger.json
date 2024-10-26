@@ -150,6 +150,30 @@
         "tags": [
           "SlipBox"
         ]
+      },
+      "delete": {
+        "operationId": "SlipBoxController_deleteTag",
+        "summary": "删除标签",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "卡片id及其更新内容",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteTagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "标签删除成功"
+          }
+        },
+        "tags": [
+          "SlipBox"
+        ]
       }
     },
     "/slip-box/tags/{id}": {
@@ -381,6 +405,27 @@
         },
         "required": [
           "deletedTagIds"
+        ]
+      },
+      "DeleteTagDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "标签id"
+          },
+          "tagName": {
+            "type": "string",
+            "description": "标签名称"
+          },
+          "overCards": {
+            "type": "boolean",
+            "description": "是否删除卡片"
+          }
+        },
+        "required": [
+          "id",
+          "tagName"
         ]
       }
     }
