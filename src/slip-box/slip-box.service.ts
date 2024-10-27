@@ -124,7 +124,8 @@ export class SlipBoxService {
             return { card, tags }
         } catch (error) {
             await queryRunner.rollbackTransaction() // 事务回滚
-            throw new HttpException(error, 500)
+            console.error('createCard error', error);
+            throw new HttpException('创建卡片失败', 400)
         } finally {
             await queryRunner.release() // 释放连接
         }
@@ -339,7 +340,8 @@ export class SlipBoxService {
 
         } catch (error) {
             await queryRunner.rollbackTransaction()
-            throw new HttpException(error, 500)
+            console.error('removeCard error', error);
+            throw new HttpException('删除卡片失败', 400)
         } finally {
             await queryRunner.release()
         }
@@ -479,7 +481,8 @@ export class SlipBoxService {
 
         } catch (error) {
             await queryRunner.rollbackTransaction()
-            throw new HttpException(error, 500)
+            console.error('deleteTag error', error);
+            throw new HttpException('仅移除标签失败', 400)
         } finally {
             await queryRunner.release()
         }
@@ -588,7 +591,8 @@ export class SlipBoxService {
             })
         } catch (error) {
             await queryRunner.rollbackTransaction()
-            throw new HttpException(error, 500)
+            console.error('deleteTagOverCards error', error);
+            throw new HttpException('删除标签及卡片失败', 400)
         } finally {
             await queryRunner.release()
         }

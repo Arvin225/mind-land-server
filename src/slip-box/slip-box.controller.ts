@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, Param, Post, Query } from '@nestjs/common';
 import { SlipBoxService } from './slip-box.service';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Card } from './entities/card.entity';
@@ -55,7 +55,11 @@ export class SlipBoxController {
     @ApiResponse({ description: '卡片新建成功', type: CreateCardResponse })
     @Post('/cards')
     public createCard(@Body() createCardDto: CreateCardDto): Promise<CreateCardResponse> {
-        return this.slipBoxService.createCard(createCardDto);
+        try {
+            return this.slipBoxService.createCard(createCardDto);
+        } catch (error) {
+            throw error
+        }
     }
 
     @ApiOperation({ summary: '删除卡片' })
@@ -67,7 +71,11 @@ export class SlipBoxController {
             // 永久删除
             return this.slipBoxService.deleteCard(deleteCardDto)
         } else {
-            return this.slipBoxService.removeCard(deleteCardDto)
+            try {
+                return this.slipBoxService.removeCard(deleteCardDto)
+            } catch (error) {
+                throw error
+            }
         }
     }
 
@@ -78,10 +86,18 @@ export class SlipBoxController {
     public deleteTag(@Body() deleteTagDto: DeleteTagDto): Promise<void> {
         if (deleteTagDto.overCards) {
             // 删除标签及卡片
-            return this.slipBoxService.deleteTagOverCards(deleteTagDto)
+            try {
+                return this.slipBoxService.deleteTagOverCards(deleteTagDto)
+            } catch (error) {
+                throw error
+            }
         } else {
             // 仅移除标签
-            return this.slipBoxService.deleteTag(deleteTagDto)
+            try {
+                return this.slipBoxService.deleteTag(deleteTagDto)
+            } catch (error) {
+                throw error
+            }
         }
     }
 }

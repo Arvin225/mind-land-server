@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Tag {
@@ -8,7 +8,8 @@ export class Tag {
     id?: number;
 
     @ApiProperty({ description: '标签名', type: String })
-    @Column({ unique: true })
+    @Index({ unique: true })
+    @Column()
     tagName: string;
 
     @ApiProperty({ description: '父标签的id', type: Number })
