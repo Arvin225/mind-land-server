@@ -2,9 +2,6 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Column, PrimaryGeneratedColumn } from "typeorm";
 
 export class PostItemDto {
-    @ApiProperty({ description: '待办项id', type: Number })
-    @PrimaryGeneratedColumn()
-    id: number
 
     @ApiProperty({ description: '待办项内容', type: String })
     @Column()
