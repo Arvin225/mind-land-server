@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SlipBoxModule } from './slip-box/slip-box.module';
+import { ToDoModule } from './to-do/to-do.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -12,6 +13,6 @@ import { SlipBoxModule } from './slip-box/slip-box.module';
     database: 'mind-land',
     autoLoadEntities: true,
     synchronize: true,
-  }), SlipBoxModule],
+  }), SlipBoxModule, ToDoModule],
 })
 export class AppModule { }
