@@ -51,6 +51,7 @@ export class ToDoController {
     }
 
     @ApiOperation({ summary: '获取列表下的待办项' })
+    @ApiBody({ type: GetItemsDto })
     @ApiResponse({ type: ToDoItem, isArray: true })
     @Get('/items')
     public getItems(@Body() getItemsDto: GetItemsDto): Promise<ToDoItem[]> {

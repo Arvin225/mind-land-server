@@ -18,10 +18,6 @@ export class PatchItemDto {
     @Column()
     star?: boolean
 
-    @ApiProperty({ description: '是否删除', type: Boolean, required: false })
-    @Column()
-    del?: boolean
-
     @ApiProperty({ description: '所属列表id', type: Number, required: false })
     @Column()
     listId?: number

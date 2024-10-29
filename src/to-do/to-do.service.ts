@@ -97,7 +97,7 @@ export class ToDoService {
 
     /* 非永久删除待办项 */
     async removeItem(id: number) {
-        return this.toDoItemRepository.update(id, { del: true })
+        return this.toDoItemRepository.update(id, { del: true, listId: 0, listName: '' })
     }
 
     /* 永久删除待办项 */

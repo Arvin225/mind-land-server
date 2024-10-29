@@ -206,6 +206,205 @@
           "SlipBox"
         ]
       }
+    },
+    "/to-do/lists": {
+      "post": {
+        "operationId": "ToDoController_postList",
+        "summary": "新建列表",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostListDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      },
+      "get": {
+        "operationId": "ToDoController_getLists",
+        "summary": "获取所有列表",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToDoList"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      },
+      "patch": {
+        "operationId": "ToDoController_patchList",
+        "summary": "修改列表",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchListDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      }
+    },
+    "/to-do/lists/{id}": {
+      "delete": {
+        "operationId": "ToDoController_deleteList",
+        "summary": "删除列表",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      }
+    },
+    "/to-do/items": {
+      "post": {
+        "operationId": "ToDoController_postItem",
+        "summary": "新增待办项",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      },
+      "get": {
+        "operationId": "ToDoController_getItems",
+        "summary": "获取列表下的待办项",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetItemsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToDoItem"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      },
+      "patch": {
+        "operationId": "ToDoController_patchItem",
+        "summary": "修改待办项",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      },
+      "delete": {
+        "operationId": "ToDoController_deleteItem",
+        "summary": "删除待办项",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "ToDo"
+        ]
+      }
     }
   },
   "info": {
@@ -426,6 +625,204 @@
         "required": [
           "id",
           "tagName"
+        ]
+      },
+      "PostListDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "列表名称"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ToDoList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "列表名id"
+          },
+          "name": {
+            "type": "string",
+            "description": "列表名称"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "PatchListDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "列表id"
+          },
+          "name": {
+            "type": "string",
+            "description": "列表名称"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "PostItemDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "待办项内容"
+          },
+          "done": {
+            "type": "boolean",
+            "description": "是否完成"
+          },
+          "star": {
+            "type": "boolean",
+            "description": "是否星标"
+          },
+          "del": {
+            "type": "boolean",
+            "description": "是否删除"
+          },
+          "listId": {
+            "type": "number",
+            "description": "所属列表id"
+          },
+          "listName": {
+            "type": "string",
+            "description": "所属列表名称"
+          }
+        },
+        "required": [
+          "content",
+          "done",
+          "star",
+          "del",
+          "listId",
+          "listName"
+        ]
+      },
+      "GetItemsDto": {
+        "type": "object",
+        "properties": {
+          "listId": {
+            "type": "number",
+            "description": "列表id"
+          },
+          "star": {
+            "type": "boolean",
+            "description": "是否星标"
+          },
+          "done": {
+            "type": "boolean",
+            "description": "是否完成"
+          },
+          "del": {
+            "type": "boolean",
+            "description": "是否删除"
+          }
+        }
+      },
+      "ToDoItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "待办项id"
+          },
+          "content": {
+            "type": "string",
+            "description": "待办项内容"
+          },
+          "done": {
+            "type": "boolean",
+            "description": "是否完成"
+          },
+          "star": {
+            "type": "boolean",
+            "description": "是否星标"
+          },
+          "del": {
+            "type": "boolean",
+            "description": "是否删除"
+          },
+          "listId": {
+            "type": "number",
+            "description": "所属列表id"
+          },
+          "listName": {
+            "type": "string",
+            "description": "所属列表名称"
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "done",
+          "star",
+          "del",
+          "listId",
+          "listName"
+        ]
+      },
+      "PatchItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "待办项id"
+          },
+          "content": {
+            "type": "string",
+            "description": "待办项内容"
+          },
+          "done": {
+            "type": "boolean",
+            "description": "是否完成"
+          },
+          "star": {
+            "type": "boolean",
+            "description": "是否星标"
+          },
+          "del": {
+            "type": "boolean",
+            "description": "是否删除"
+          },
+          "listId": {
+            "type": "number",
+            "description": "所属列表id"
+          },
+          "listName": {
+            "type": "string",
+            "description": "所属列表名称"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "DeleteItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "待办项id"
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "是否永久删除"
+          }
+        },
+        "required": [
+          "id"
         ]
       }
     }
