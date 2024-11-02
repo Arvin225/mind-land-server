@@ -14,7 +14,16 @@ async function bootstrap() {
   // 注册全局拦截器
   app.useGlobalFilters(new HttpExceptionFilter())
   // 注册全局验证管道
-  app.useGlobalPipes(new ValidationPipe())
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true
+  }))
+
+  // 启用 CORS
+  app.enableCors({
+    origin: 'http://localhost:3000', // React 应用的地址
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
   const swaggerOptions = new DocumentBuilder()
     .setTitle('mind-land')

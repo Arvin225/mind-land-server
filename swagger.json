@@ -329,17 +329,80 @@
       "get": {
         "operationId": "ToDoController_getItems",
         "summary": "获取列表下的待办项",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetItemsDto"
-              }
+        "parameters": [
+          {
+            "name": "listId",
+            "required": false,
+            "in": "query",
+            "description": "列表id",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "star",
+            "required": false,
+            "in": "query",
+            "description": "是否星标",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "done",
+            "required": false,
+            "in": "query",
+            "description": "是否完成",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "del",
+            "required": false,
+            "in": "query",
+            "description": "是否删除",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "列表id",
+            "required": false,
+            "name": "listId",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "description": "是否星标",
+            "required": false,
+            "name": "star",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "是否完成",
+            "required": false,
+            "name": "done",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "是否删除",
+            "required": false,
+            "name": "del",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           }
-        },
+        ],
         "responses": {
           "default": {
             "description": "",
@@ -710,27 +773,6 @@
           "listName"
         ]
       },
-      "GetItemsDto": {
-        "type": "object",
-        "properties": {
-          "listId": {
-            "type": "number",
-            "description": "列表id"
-          },
-          "star": {
-            "type": "boolean",
-            "description": "是否星标"
-          },
-          "done": {
-            "type": "boolean",
-            "description": "是否完成"
-          },
-          "del": {
-            "type": "boolean",
-            "description": "是否删除"
-          }
-        }
-      },
       "ToDoItem": {
         "type": "object",
         "properties": {
@@ -791,10 +833,6 @@
           "star": {
             "type": "boolean",
             "description": "是否星标"
-          },
-          "del": {
-            "type": "boolean",
-            "description": "是否删除"
           },
           "listId": {
             "type": "number",
